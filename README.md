@@ -4,7 +4,7 @@ This [Roll20](http://roll20.net/) script automates use of the Deck of Illusions 
 
 ## Deal
 
-Typing `!doi deal` in the chat will randomly choose a card from the deck and display the name of the creature(s) for which an illusion is created. Due to the limitations of the API, this does not place any tokens on the VTT nor show an image in the chat, it merely tells the name of the creature(s). The GM will need to select tokens to represent the creature(s) conjured.
+Typing `!doi deal` in the chat with a character token selected will randomly choose a card from the deck and display the name of the creature(s) for which an illusion is created. Due to the limitations of the API, this will not place any tokens on the VTT nor show an image in the chat, it merely tells the name of the creature(s). The GM will need to select tokens to represent the creature(s) conjured.
 
 This card will then be removed from the current deck and cannot be redrawn until the deck is reset.
 
@@ -20,7 +20,7 @@ The SRD description of the Deck of Illusions suggests card equivalences with a s
 
 The SRD description of the Deck of Illusions says that 1d20-1 cards will be missing from Decks of Illusion found amongst a treasure horde. To accommodate this, send `!doi found` in chat to randomly remove 1d20-1 cards from the deck. Don't worry, this will only work with a full deck. **GM only.**
 
-## Deck Resets
+## Deck Reset
 
 The Deck of Illusions can be reset back to the original 34 cards in case a different deck is found. Two decks cannot be used at once, however. **GM only.**
 

@@ -13,7 +13,7 @@ var DeckOfIllusions = DeckOfIllusions || (function () {
     //---- INFO ----//
 
     var version = '0.1',
-        debugMode = true,
+        debugMode = false,
         styles = {
             box:  'background-color: #fff; border: 1px solid #000; padding: 8px 10px; border-radius: 6px; margin-left: -40px; margin-right: 0px;',
             title: 'padding: 0 0 10px 0; color: ##591209; font-size: 1.5em; font-weight: bold; font-variant: small-caps; font-family: "Times New Roman",Times,serif;',
@@ -66,7 +66,7 @@ var DeckOfIllusions = DeckOfIllusions || (function () {
         if (typeof state['DeckOfIllusions'].cards == 'undefined') state['DeckOfIllusions'].cards = defaultCards;
         if (typeof state['DeckOfIllusions'].showCard == 'undefined') state['DeckOfIllusions'].showCard = false;
         log('--> DeckOfIllusions v' + version + ' <-- Initialized. There are ' + _.size(state['DeckOfIllusions'].cards) + ' cards remaining in the deck.');
-		if (debugMode) sendChat('Deck of Illusions', 'DeckOfIllusions loaded.', null, {noarchive:true});
+		if (debugMode) showDialog('', 'Deck of Illusions loaded', 'GM');
     },
 
     //----- INPUT HANDLER -----//
