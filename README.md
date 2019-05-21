@@ -8,6 +8,10 @@ Typing `!doi deal` in the chat will randomly choose a card from the deck and dis
 
 This card will then be removed from the current deck and cannot be redrawn until the deck is reset.
 
+## Item Description
+
+Sending `!doi info` in chat will display a short description of the Deck of Illusions with a link to the compendium entry.
+
 ## Card Faces
 
 The SRD description of the Deck of Illusions suggests card equivalences with a standard deck of playing cards. These playing card faces may be displayed along with the corresponding creature(s) if desired but are not by default. To tell the script to display the card faces, send `!doi card` to toggle the display on and off. **GM only.**
@@ -16,10 +20,10 @@ The SRD description of the Deck of Illusions suggests card equivalences with a s
 
 The SRD description of the Deck of Illusions says that 1d20-1 cards will be missing from Decks of Illusion found amongst a treasure horde. To accommodate this, send `!doi found` in chat to randomly remove 1d20-1 cards from the deck. Don't worry, this will only work with a full deck. **GM only.**
 
-## Item Description
+## Deck Resets
 
-Sending `!doi info` in chat will display a short description of the Deck of Illusions with a link to the compendium entry.
+The Deck of Illusions can be reset back to the original 34 cards in case a different deck is found. Two decks cannot be used at once, however. **GM only.**
 
 ## Configuration
 
-Send `!doi config` to chat to get a menu that describes the options above and provides buttons to *reset* the deck to 34 cards and perform the config functions above. **GM only.**
+Send `!doi config` to chat to get a menu that tells how many cards remain in the Deck and provides buttons to perform the config functions above. **GM only.**
