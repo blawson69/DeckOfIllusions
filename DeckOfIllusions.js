@@ -80,25 +80,19 @@ var DeckOfIllusions = DeckOfIllusions || (function () {
                         commandDraw(msg);
 						break;
 					case 'reset':
-						if (playerIsGM(msg.playerid)) {
-							commandReset(msg);
-						}
+						if (playerIsGM(msg.playerid)) commandReset(msg);
 						break;
                     case 'found':
-						if (playerIsGM(msg.playerid)) {
-							commandFound(msg);
-						}
+						if (playerIsGM(msg.playerid)) commandFound(msg);
 						break;
                     case 'card':
-						if (playerIsGM(msg.playerid)) {
-							toggleCardShow(msg);
-						}
+						if (playerIsGM(msg.playerid)) toggleCardShow(msg);
 						break;
                     case 'info':
 						commandInfo(msg);
 						break;
 					case 'config':
-						commandConfig(msg);
+						if (playerIsGM(msg.playerid)) commandConfig(msg);
 						break;
                     default:
                         if (playerIsGM(msg.playerid)) commandConfig(msg);
