@@ -14,8 +14,8 @@ var DeckOfIllusions = DeckOfIllusions || (function () {
 
     //---- INFO ----//
 
-    var version = '1.0',
-        debugMode = false,
+    var version = '1.1',
+        debugMode = true,
         styles = {
             box:  'background-color: #fff; border: 1px solid #000; padding: 8px 10px; border-radius: 6px; margin-left: -40px; margin-right: 0px;',
             title: 'padding: 0 0 10px 0; color: ##591209; font-size: 1.5em; font-weight: bold; font-variant: small-caps; font-family: "Times New Roman",Times,serif;',
@@ -25,12 +25,12 @@ var DeckOfIllusions = DeckOfIllusions || (function () {
             cardName: 'padding: 12px 0; color: ##591209; font-size: 2em; font-weight: bold; font-variant: small-caps; font-family: "Times New Roman",Times,serif;',
             code: 'font-family: "Courier New", Courier, monospace;',
             icon: 'width: 48px; height: 48px; white-space: nowrap; margin-right: 10px; text-align: center;',
-            accent: 'background-color: ##eaeaea;'
+            accent: 'padding: 6px 12px; color: #c00; font-size: 1em; border: 1px solid #c00;'
         },
         defaultCards = [
             {name: "Ace of Hearts", illusion: "A Red Dragon", tokens: ["Red Dragon"]},
             {name: "King of Hearts", illusion: "A Knight and Four Guards", tokens: ["Knght", "Guard", "Guard", "Guard", "Guard"]},
-            {name: "Queen of Hearts", illusion: "An Succubus or A Incubus", tokens: ["Succubus", "Incubus"]},
+            {name: "Queen of Hearts", illusion: "A Succubus or an Incubus", tokens: ["Succubus", "Incubus"]},
             {name: "Jack of Hearts", illusion: "A Druid", tokens: ["Druid"]},
             {name: "Ten of Hearts", illusion: "A Cloud Giant", tokens: ["Cloud Giant"]},
             {name: "Nine of Hearts", illusion: "An Ettin", tokens: ["Ettin"]},
@@ -63,13 +63,16 @@ var DeckOfIllusions = DeckOfIllusions || (function () {
             {name: "Joker 1", illusion: "The Deck's Owner", tokens: ["Deck's Owner"]},
             {name: "Joker 2", illusion: "The Deck's Owner", tokens: ["Deck's Owner"]}
         ],
+        deck_description = "<p>An illusory creature appears real, of the appropriate size, and behaves as if it were a real creature (as presented in the Monster Manual), except that it can do no harm. While you are within 120 feet of the illusory creature and can see it, you can use an action to move it magically anywhere within 30 feet of its card. Any physical interaction with the illusory creature reveals it to be an Illusion, because Objects pass through it. Someone who uses an action to visually inspect the creature identifies it as illusory with a successful DC 15 Intelligence (Investigation) check. The creature then appears translucent.</p><p>The Illusion lasts until its card is moved or the Illusion is dispelled. When the Illusion ends, the image on its card disappears, and that card can't be used again.",
 
     checkInstall = function () {
         if (!_.has(state, 'DeckOfIllusions')) state['DeckOfIllusions'] = state['DeckOfIllusions'] || {};
         if (typeof state['DeckOfIllusions'].cards == 'undefined') state['DeckOfIllusions'].cards = defaultCards;
         if (typeof state['DeckOfIllusions'].illusions == 'undefined') state['DeckOfIllusions'].illusions = [];
         if (typeof state['DeckOfIllusions'].showCard == 'undefined') state['DeckOfIllusions'].showCard = false;
+        if (typeof state['DeckOfIllusions'].randomRotate == 'undefined') state['DeckOfIllusions'].randomRotate = true;
         if (typeof state['DeckOfIllusions'].cards[0] != 'undefined' && typeof state['DeckOfIllusions'].cards[0].tokens == 'undefined') upgradeCards();
+        state['DeckOfIllusions'].cards = _.shuffle(state['DeckOfIllusions'].cards);
         log('--> DeckOfIllusions v' + version + ' <-- Initialized. There are ' + _.size(state['DeckOfIllusions'].cards) + ' cards remaining in the deck.');
         if (debugMode) {
 			var d = new Date();
@@ -90,15 +93,6 @@ var DeckOfIllusions = DeckOfIllusions || (function () {
                     case 'info':
                         commandInfo(msg);
                         break;
-					case 'reset':
-						if (playerIsGM(msg.playerid)) commandReset(msg);
-						break;
-                    case 'found':
-						if (playerIsGM(msg.playerid)) commandFound(msg);
-						break;
-                    case 'card':
-						if (playerIsGM(msg.playerid)) toggleCardShow(msg);
-						break;
                     case 'deck-character':
 						if (playerIsGM(msg.playerid)) commandCreateDeckChar(msg);
 						break;
@@ -143,7 +137,7 @@ var DeckOfIllusions = DeckOfIllusions || (function () {
                     message += getAttrByName(char.get('id'), 'doi_owner', 'current') + ' draws a random card from the <b>Deck of Illusions</b>...<br><br>';
                     var tmpDeck = state['DeckOfIllusions'].cards;
                     var random_card = (_.size(state['DeckOfIllusions'].cards) == 1) ? tmpDeck[0] : tmpDeck[randomInteger(_.size(tmpDeck)-1)];
-                    createIllusion(token, random_card);
+                    createIllusion(token, random_card, msg.playerid);
                     state['DeckOfIllusions'].cards = _.reject(tmpDeck, function (card) { return card.name == random_card.name; });
 
                     message += 'The ' + ( (state['DeckOfIllusions'].showCard) ? '<i>' + random_card.name + '</i>' : 'card' )
@@ -160,19 +154,42 @@ var DeckOfIllusions = DeckOfIllusions || (function () {
     },
 
     commandInfo = function(msg) {
-        var message = 'The <b>Deck of Illusions</b> is a set of up to 34 cards. When a card is drawn at random and thrown to the ground within 30 feet of you, an illusion of one or more creatures forms and remains until dispelled. The illusory creature(s) look and act real but can do no harm.<br><br>For more detailed information see the <a style="' + styles.textButton + '" href="https://roll20.net/compendium/dnd5e/Deck%20of%20Illusions">compendium entry</a>.';
+        var message = '<p>The <b>Deck of Illusions</b> is a set of up to 34 cards. When a card is drawn at random and thrown to the ground within 30 feet of you, an illusion of one or more creatures forms and remains until dispelled.</p>' + deck_description;
         showDialog('Deck of Illusions', message, msg.who);
     },
 
-    commandConfig = function (msg) {
-        var message = 'The Deck of Illusions currently contains <b>' + _.size(state['DeckOfIllusions'].cards) + '</b> cards.';
-        message += '<div style="' + styles.buttonWrapper + '"><a style="' + styles.button + '" href="!doi reset" title="Reset the Deck to all 34 cards.">Reset Deck</a> &nbsp; <a style="';
-        message += styles.button + '" href="!doi found" title="Randomly remove 1d20-1 cards from the full Deck if found">Found Deck</a></div>';
+    commandConfig = function (msg, deck_msg = '') {
+        var message = '', parms = msg.content.trim().split(/\s*\-\-/i);
+        if (deck_msg != '') deck_msg = '<p style="' + styles.accent + '">' + deck_msg + '</p>';
+        if (parms[1]) {
+            if (parms[1] == 'reset-deck') {
+                state['DeckOfIllusions'].cards = _.shuffle(defaultCards);
+                deck_msg = '<p style="' + styles.accent + '">The Deck of Illusions has been reset.</p>';
+            }
+            if (parms[1] == 'found') {
+                if (_.size(state['DeckOfIllusions'].cards) == 34) {
+                    var missing = randomInteger(20)-1;
+                    if (missing > 0) {
+                        var tmpDeck = state['DeckOfIllusions'].cards;
+                        for (var x = 0; x < missing; x++) {
+                            var tmpCard = tmpDeck[randomInteger(_.size(tmpDeck)-1)];
+                            var tmpDeck = _.reject(tmpDeck, function (card) { return card.name == tmpCard.name; });
+                        }
+                        state['DeckOfIllusions'].cards = tmpDeck;
+                    }
+                    deck_msg = '<p style="' + styles.accent + '">' + missing + ' cards have been removed from the Deck of Illusions.</p>';
+                } else {
+                    deck_msg = '<p style="' + styles.accent + '">There was already fewer than 34 cards in the Deck. <b>No cards</b> were removed.</p>';
+                }
+            }
+            if (parms[1] == 'toggle-face') state['DeckOfIllusions'].showCard = !state['DeckOfIllusions'].showCard;
+            if (parms[1] == 'toggle-name') state['DeckOfIllusions'].showTokenName = !state['DeckOfIllusions'].showTokenName;
+            if (parms[1] == 'toggle-rotate') state['DeckOfIllusions'].randomRotate = !state['DeckOfIllusions'].randomRotate;
+        }
 
-        message += '<hr style="margin: 4px 12px 8px;"><div style=\'' + styles.title + '\'>Card Faces</div>';
-        message += 'You can choose to display the names of the cards as they are drawn. They are currently set to be <b>';
-        message += (state['DeckOfIllusions'].showCard ? 'shown' : 'hidden') + '</b>.<div style="' + styles.buttonWrapper + '"><a style="' + styles.button;
-        message += '" href="!doi card">' + (state['DeckOfIllusions'].showCard ? 'Hide' : 'Show') + '</a></div>';
+        message += deck_msg + 'The Deck of Illusions currently contains <b>' + _.size(state['DeckOfIllusions'].cards) + '</b> cards.';
+        message += '<div style="' + styles.buttonWrapper + '"><a style="' + styles.button + '" href="!doi config --reset-deck" title="Reset the Deck to all 34 cards.">Reset Deck</a> &nbsp; <a style="';
+        message += styles.button + '" href="!doi config --found" title="Randomly remove 1d20-1 cards from the full Deck if found">Found Deck</a></div>';
 
         message += '<hr style="margin: 4px 12px 8px;"><div style=\'' + styles.title + '\'>Deck Character</div>';
         if (!checkDeckCharExistence()) {
@@ -182,67 +199,41 @@ var DeckOfIllusions = DeckOfIllusions || (function () {
             message += 'A Deck Character has already been created. If you wish to re-create it, delete the current one and return to the config menu.';
         }
 
+        message += '<hr style="margin: 4px 12px 8px;"><div style=\'' + styles.title + '\'>Options</div>';
+        message += 'You are currently <b>' + (state['DeckOfIllusions'].showCard ? 'showing' : 'hiding') + '</b> the names of the cards as they are drawn. <a style="' + styles.textButton + '" href="!doi config --toggle-face">' + (state['DeckOfIllusions'].showCard ? 'Hide' : 'Show') + '</a><br><br>';
+        message += 'You <b>' + (state['DeckOfIllusions'].randomRotate ? 'allow' : 'don\'t allow') + '</b> the tokens to be rotated randomly on generation. <a style="' + styles.textButton + '" href="!doi config --toggle-rotate">Turn ' + (state['DeckOfIllusions'].randomRotate ? 'Off' : 'On') + '</a>';
+
         message += '<hr style="margin: 4px 12px 8px;"><div style=\'' + styles.title + '\'>Illusion Tokens</div>';
         message += 'View and create Illusion Tokens for each illusory being that can be generated by the Deck.<div style="' + styles.buttonWrapper;
         message += '"><a style="' + styles.button + '" href="!doi illusions-list">View Illusions</a></div>';
 
         message += '<hr style="margin: 4px 12px 8px;"><div style=\'' + styles.title + '\'>Import/Export</div>';
-        message += 'To bring your Illusion Tokens from this game into another, you may export them into a handout which can then be transferred to another game.';
-        message += '<div style="' + styles.buttonWrapper + '"><a style="' + styles.button + '" href="!doi export">Export Illusions</a></div>';
+        message += 'To bring your Illusion Tokens from this game into another, you may export them into a handout which can then be transferred to another game.<br><br>';
         message += 'To import effects into this game, make sure there exists a "DOI: Illusion Tokens" handout in the proper format.';
-        message += '<div style="' + styles.buttonWrapper + '"><a style="' + styles.button + '" href="!doi import">Import Illusions</a></div>';
+        message += '<div style="' + styles.buttonWrapper + '"><a style="' + styles.button + '" href="!doi import">Import Illusions</a> &nbsp; <a style="' + styles.button + '" href="!doi export">Export Illusions</a></div>';
 
         message += '<p>See the <a style="' + styles.textButton + '" href="https://github.com/blawson69/DeckOfIllusions">documentation</a> for complete instructions.</p>';
 
         showDialog('Config Menu', message, 'GM');
     },
 
-    commandReset = function () {
-        // Reset the Deck to 34 cards
-        state['DeckOfIllusions'].cards = defaultCards;
-        var button = '<div style="' + styles.buttonWrapper + '"><a style="' + styles.button + '" href="!doi config">&#9668; Back to Config</a></div>';
-        var message = 'The Deck of Illusions has been reset. All 34 cards have been restored.' + button;
-        log('Deck of Illusions reset to 34 cards.')
-        showDialog('Reset Deck', message, 'GM');
-    },
-
-    commandFound = function (msg) {
-        // Remove 1d20-1 cards from the full deck
-        var message;
-        var button = '<div style="' + styles.buttonWrapper + '"><a style="' + styles.button + '" href="!doi config">&#9668; Back to Config</a></div>';
-        if (_.size(state['DeckOfIllusions'].cards) == 34) {
-            var missing = randomInteger(20)-1;
-            if (missing > 0) {
-                var tmpDeck = state['DeckOfIllusions'].cards;
-                for (var x = 0; x < missing; x++) {
-                    var tmpCard = tmpDeck[randomInteger(_.size(tmpDeck)-1)];
-                    var tmpDeck = _.reject(tmpDeck, function(card){ return card.name == tmpCard.name; });
-                }
-                state['DeckOfIllusions'].cards = tmpDeck;
-            }
-            log(missing + ' cards removed from Deck of Illusions. Deck now contains ' + _.size(state['DeckOfIllusions'].cards) + ' cards.');
-            message = missing + ' random cards were removed from the Deck of Illusions, suitable for discovery amongst treasure.';
-        } else {
-            message = 'There was already less than the full Deck of Illusions. <b>No cards</b> were removed.';
-        }
-        showDialog('Create Treasure Deck', message+button, 'GM');
-    },
-
+    // Create Deck Character from selected token
     commandCreateDeckChar = function (msg) {
-        // Create Deck Character
-        if (!msg.selected || msg.selected.length != 1) {
-			showDialog('Deck Character Error', 'You must have one token selected!', 'GM');
+        if (!msg.selected || _.size(msg.selected) != 1) {
+			//showDialog('Deck Character Error', 'You must have one token selected!', 'GM');
+            commandConfig(msg, 'You must have only one token selected!');
 			return;
 		}
         if (checkDeckCharExistence()) {
-			showDialog('Deck Character Error', 'You have already created a Deck Character!', 'GM');
+			//showDialog('Deck Character Error', 'You have already created a Deck Character!', 'GM');
+            commandConfig(msg, 'You have already created a Deck Character!');
 			return;
 		}
 
         var token = getObj(msg.selected[0]._type, msg.selected[0]._id);
         if (token && token.get('represents') == '') {
             var char = createObj("character", {name: 'Deck of Illusions', avatar: token.get('imgsrc')});
-            char.set({bio: '<h2>Introduction</h2><p>I am a <b>Deck of Illusions,</b> a set of up to 34 magical cards. When a card is drawn at random from the deck and thrown to the ground within 30 feet of you, an illusion of one or more creatures forms and remains until dispelled. The illusory creature(s) look and act real but can do no harm.</p><p>For more detailed information read the <a style="' + styles.textButton + '" href="https://roll20.net/compendium/dnd5e/Deck%20of%20Illusions">compendium entry</a>.</p><h2>How to Use</h2><p>Just drag me from the Journal to the map and place me where you wish to throw a random card. Make sure I\'m still selected and click the "Draw Card" token action button. You can use "Help" to have the description above whispered to you in chat.</p>'});
+            char.set({bio: '<h2>Introduction</h2><p>I am a <b>Deck of Illusions</b>, a set of up to 34 magical cards. When a card is drawn at random from the deck and thrown to the ground within 30 feet of you, an illusion of one or more creatures forms over the Thrown card and remains until dispelled.</p>' + deck_description + '<h2>How to Use</h2><p>Just drag me from the Journal to the map and place me where you wish to throw a random card. Make sure I\'m still selected and click the "Draw Card" token action button. You can use "Help" to have the description above whispered to you in chat.</p>'});
 
             var menu = createObj("ability", { name: 'Draw Card', characterid: char.get('id'), action: '!doi draw', istokenaction: true });
             var help = createObj("ability", { name: 'Help', characterid: char.get('id'), action: '!doi help', istokenaction: true });
@@ -254,9 +245,11 @@ var DeckOfIllusions = DeckOfIllusions || (function () {
             token.set({represents: char.get('id'), name: 'Deck of Illusions', showname: false, showplayers_name: false, showplayers_bar1: false, showplayers_bar2: false, showplayers_bar3: false, playersedit_bar1: false, playersedit_bar2: false, playersedit_bar3: false, light_otherplayers: false});
             setDefaultTokenForCharacter(char, token);
 
-            showDialog('Deck Character Created', 'A Deck character has been successfully created with the selected token.<div style="' + styles.buttonWrapper + '"><a style="' + styles.button + '" href="!doi config">&#9668; Back</a></div>', 'GM');
+            //showDialog('Deck Character Created', 'A Deck character has been successfully created with the selected token.<div style="' + styles.buttonWrapper + '"><a style="' + styles.button + '" href="!doi config">&#9668; Back</a></div>', 'GM');
+            commandConfig(msg, 'A Deck Character has been created with the selected token.');
         } else {
-            showDialog('Deck Character Error', 'Invalid token! Make sure your token does not already represent a character. Try again.', 'GM');
+            //showDialog('Deck Character Error', 'Invalid token! Make sure your token does not already represent a character. Try again.', 'GM');
+            commandConfig(msg, '<b>Invalid token!</b> Your token cannot already represent a character.');
         }
     },
 
@@ -275,7 +268,7 @@ var DeckOfIllusions = DeckOfIllusions || (function () {
         var doi = _.find(allChars, function (char) {
             var char_id = char.get('id');
             var tag = findObjs({type: 'attribute', characterid: char_id, name: 'doi_owner'})[0];
-            if (tag && tag.get('current') !== '' && char.get('name') == 'Deck of Illusions') return true;
+            if (tag && char.get('name') == 'Deck of Illusions') return true;
             else return false;
         });
         if (doi) return true;
@@ -286,14 +279,14 @@ var DeckOfIllusions = DeckOfIllusions || (function () {
         var char = getObj('character', char_id);
         if (char) {
             var tag = findObjs({type: 'attribute', characterid: char_id, name: 'doi_owner'})[0];
-            if (tag && tag.get('current') !== '' && char.get('name') == 'Deck of Illusions') return true;
+            if (tag && char.get('name') == 'Deck of Illusions') return true;
             else return false;
         } else return false;
     },
 
+    // Add an illusion graphic to the collection for the specified being
     commandSetIllusion = function (msg) {
-		// Add an illusion graphic to the collection for the specified being
-		if (!msg.selected || msg.selected.length != 1) {
+		if (!msg.selected || _.size(msg.selected) != 1) {
 			showDialog('Illusion Error', 'The incorrect number of tokens are selected!', 'GM');
 			return;
 		}
@@ -323,8 +316,8 @@ var DeckOfIllusions = DeckOfIllusions || (function () {
         }
 	},
 
+    // Generate list of illusory beings for setting tokens
     commandBeingsList = function (msg) {
-        // Generate list of illusory beings for setting tokens
         var beings = _.uniq(_.flatten(_.pluck(defaultCards, 'tokens')));
         var message = '<table style="border: 0; width: 100%;" cellpadding="0" cellspacing="2">';
 
@@ -333,25 +326,35 @@ var DeckOfIllusions = DeckOfIllusions || (function () {
             var icon = (illusion) ? '<img src="' + illusion.imgsrc + '" style="width: 48px; height: 48px;">' : ' -- ';
             message += '<tr><td style="width: 58px;"><div style="' + styles.icon + '">' + icon + '</div></td>';
             message += '<td style="width: 100%;">' + being + '</td>';
-            message += '<td style="text-align: center; white-space: nowrap; padding: 2px;"><a style="' + styles.button + '" href="!doi set-illusion name|' + being + '" title="Set ' + being + ' to the selected token">Set</a></td>';
+            message += '<td style="text-align: center; white-space: nowrap; padding: 2px;"><a style="' + styles.button + '" href="!doi set-illusion name|' + being + '" title="Set selected token as ' + being + '">Set</a></td>';
             message += '</tr>';
         });
+
         message += '<tr><td colspan="3" style="text-align: center; padding: 2px;"><a style="' + styles.button + '" href="!doi config">&#9668; Back</a></td></tr>';
         message += '</table>';
         showDialog('Illusion Tokens', message, 'GM');
     },
 
-    createIllusion = function (target, card) {
-        // Find Illusion Tokens according to the drawn card
+    // Find Illusion Tokens according to the drawn card
+    createIllusion = function (target, card, player_id) {
         if (target && card) {
             var tokens = card.tokens;
+
+            // Accomodate the one card that is "or" not "and"
+            if (card.name == 'Queen of Hearts') tokens = [card.tokens[randomInteger(2) - 1]];
+
             var base_illusion = _.find(state['DeckOfIllusions'].illusions, function (x) { return x.name == tokens[0]; });
             if (base_illusion && typeof base_illusion.imgsrc != 'undefined' && base_illusion.imgsrc != '') {
                 var top = target.get('top');
                 var left = target.get('left');
-                placeIllusionToken(base_illusion, top, left, true);
+                var base_token = placeIllusionToken(base_illusion, top, left, player_id, true);
+                if (base_token) {
+                    // Reset center coordinates if offset was needed
+                     top = base_token.get('top');
+                     left = base_token.get('left');
+                }
 
-                // place extra beings if needed
+                // place any extra beings
                 if (_.size(tokens) > 1) {
                     tokens.shift();
                     var page = getObj('page', Campaign().get("playerpageid"));
@@ -360,7 +363,7 @@ var DeckOfIllusions = DeckOfIllusions || (function () {
                     _.each(tokens, function (token) {
                         var xtra_illusion = _.find(state['DeckOfIllusions'].illusions, function (x) { return x.name == token; });
                         if (xtra_illusion && typeof xtra_illusion.imgsrc != 'undefined' && xtra_illusion.imgsrc != '')
-                        placeIllusionToken(xtra_illusion, places[count].top, places[count].left);
+                        placeIllusionToken(xtra_illusion, places[count].top, places[count].left, player_id);
                         count++;
                     });
                 }
@@ -368,8 +371,8 @@ var DeckOfIllusions = DeckOfIllusions || (function () {
         }
     },
 
-    placeIllusionToken = function (being, top, left, offset = false) {
-        // Place the indicated Illusion Token on the map
+    // Places the indicated Illusion Token on the map
+    placeIllusionToken = function (being, top, left, player_id, offset = false) {
         var page = getObj('page', Campaign().get("playerpageid"));
         var cell_width = page.get('snapping_increment') * 70; //pixels per unit
         var page_width = page.get('width') * cell_width; // pixel width of page
@@ -384,13 +387,11 @@ var DeckOfIllusions = DeckOfIllusions || (function () {
             if (left >= page_width - Math.floor(cell_width / 2)) left -= cell_width; // set 2 units over from right
         }
 
-        var base_token = createObj("graphic", {pageid: page.get('id'), layer: 'objects', imgsrc: being.imgsrc, width: being.width, height: being.height, top: top, left: left, rotation: (randomInteger(8) * 45), flipv: being.flipv, fliph: being.fliph});
-        toFront(base_token);
-    },
+        var illusion_token = createObj("graphic", {pageid: page.get('id'), layer: 'objects', name: being.name, imgsrc: being.imgsrc, width: being.width, height: being.height, top: top, left: left, flipv: being.flipv, fliph: being.fliph, controlledby: player_id, playersedit_name: false, showname: false, showplayers_name: false, playersedit_bar1: false, playersedit_bar2: false, playersedit_bar3: false, playersedit_aura1: false, playersedit_aura2: false});
+        if (state['DeckOfIllusions'].randomRotate) illusion_token.set({rotation: (randomInteger(8) * 45)});
+        toFront(illusion_token);
 
-    toggleCardShow = function (msg) {
-        state['DeckOfIllusions'].showCard = !state['DeckOfIllusions'].showCard;
-        commandConfig(msg);
+        return illusion_token;
     },
 
     upgradeCards = function () {
@@ -402,6 +403,7 @@ var DeckOfIllusions = DeckOfIllusions || (function () {
     },
 
     commandExport = function () {
+        showDialog('Export in Progress', 'Your Illusion Tokens are being exported...', 'GM');
         var parsedData, doiNote = findObjs({name: 'DOI: Illusion Tokens', type: 'handout'})[0];
         if (!doiNote) doiNote = createObj("handout", {name: 'DOI: Illusion Tokens'});
         if (doiNote) {
@@ -410,11 +412,15 @@ var DeckOfIllusions = DeckOfIllusions || (function () {
                 parsedData += '<p>' + item.name + '|' + item.width + '|' + item.height + '|' + item.imgsrc + '|' + item.flipv + '|' + item.fliph + '</p>';
             });
             doiNote.set({ notes: parsedData });
-            showDialog('Export Successful', 'Your Illusion Tokens have been successfully exported.', 'GM');
+            //showDialog('Export Successful', 'Your Illusion Tokens have been successfully exported.', 'GM');
+            setTimeout(function () {
+                commandConfig({content: ''}, 'Your Illusion Tokens have been successfully exported.');
+            }, 1500);
         }
     },
 
     commandImport = function (msg) {
+        showDialog('Import in Progress', 'Your Illusion Tokens are being imported...', 'GM');
         var errs = [], message = '', args = msg.content.split(/\s*\-\-/i);
         var count = 0, doiNote = findObjs({name: 'DOI: Illusion Tokens', type: 'handout'})[0];
 
@@ -450,22 +456,28 @@ var DeckOfIllusions = DeckOfIllusions || (function () {
                     message += '<br><br>The following errors were encountered:<ul><li>' + errs.join('</li><li>') + '</li></ul>';
                 }
 
-                showDialog('Import Results', message, 'GM');
+                //showDialog('Import Results', message, 'GM');
+                setTimeout(function () {
+                    commandConfig({content: ''}, message);
+                }, 1500);
             });
         } else {
-            showDialog('Import Error', 'A handout named "DOI: Illusion Tokens" was not found. Nothing to import.', 'GM');
+            //showDialog('Import Error', 'A handout named "DOI: Illusion Tokens" was not found. Nothing to import.', 'GM');
+            setTimeout(function () {
+                commandConfig({content: ''}, 'A handout named "DOI: Illusion Tokens" was not found. Nothing to import.');
+            }, 1500);
         }
     },
 
+    // Returns whether or not a given imgsrc is valid
     isValidSrc = function (url) {
-        // Returns whether or not a given imgsrc is valid
         // Valid = https://s3.amazonaws.com/files.d20.io/images/90111752/GDBao8Z1IvYvrSSbtHEU1g/thumb.png?1566690793
         var ir = /^.*d20\.io\/images\/.*\/(thumb|med|original|max)\.png\?\d+$/;
         return ir.test(url);
     },
 
+    // Returns whether or not a string is actually a Number
     isNum = function (txt) {
-        // Returns whether or not a string is actually a Number
         var nr = /^\d+$/;
         return nr.test(txt);
     },
